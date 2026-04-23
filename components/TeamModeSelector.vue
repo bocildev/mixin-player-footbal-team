@@ -85,7 +85,7 @@ function incPPT() { emit('update:playersPerTeam', props.playersPerTeam + 1) }
           <span class="neo-badge bg-neo-blue text-white">{{ previewTeamCount }} tim</span>
         </div>
         <div class="flex justify-between">
-          <span>Pemain per tim</span>
+          <span>Total per tim</span>
           <span class="neo-badge">{{ playersPerTeam }} orang</span>
         </div>
         <div v-if="previewBenchCount > 0" class="flex justify-between">
@@ -93,7 +93,7 @@ function incPPT() { emit('update:playersPerTeam', props.playersPerTeam + 1) }
           <span class="neo-badge bg-neo-orange text-white">{{ previewBenchCount }} orang</span>
         </div>
         <p v-if="previewTeamCount < 2 && playerCount > 0" class="text-neo-red border-2 border-neo-red px-2 py-1">
-          ⚠️ Butuh minimal {{ playersPerTeam * 2 }} pemain untuk 2 tim
+          ⚠️ Butuh lebih banyak pemain untuk 2 tim
         </p>
       </div>
     </div>

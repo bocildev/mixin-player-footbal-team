@@ -52,7 +52,9 @@ export function distributeByTeamCount(
 
 /**
  * MODE 2: Distribute by players per team.
- * Each team gets exactly `playersPerTeam` outfield players + 1 GK (if available).
+ * `playersPerTeam` is the TOTAL per team including GK.
+ * Each team gets 1 GK (if available) + (playersPerTeam - 1) outfield players.
+ * If no GKs, all slots are outfield players.
  * Remaining players who don't fill a complete team go to the bench.
  */
 export function distributeByPlayersPerTeam(
@@ -63,12 +65,16 @@ export function distributeByPlayersPerTeam(
   const shuffledPlayers = shuffleArray(players)
   const shuffledGks = shuffleArray(goalkeepers)
 
-  const teamCount = Math.floor(shuffledPlayers.length / playersPerTeam)
-  const bench = shuffledPlayers.slice(teamCount * playersPerTeam)
+  const hasGks = shuffledGks.length > 0
+  // Outfield slots per team: if GKs exist, reserve 1 slot for GK
+  const outfieldPerTeam = hasGks ? playersPerTeam - 1 : playersPerTeam
+
+  const teamCount = Math.floor(shuffledPlayers.length / outfieldPerTeam)
+  const bench = shuffledPlayers.slice(teamCount * outfieldPerTeam)
 
   const teams: Team[] = []
   for (let i = 0; i < teamCount; i++) {
-    const teamPlayers = shuffledPlayers.slice(i * playersPerTeam, (i + 1) * playersPerTeam)
+    const teamPlayers = shuffledPlayers.slice(i * outfieldPerTeam, (i + 1) * outfieldPerTeam)
     const gk = shuffledGks[i] ?? null
     teams.push({
       id: `team-${i + 1}`,

@@ -27,7 +27,9 @@ export const useTeamRandomizerStore = defineStore('teamRandomizer', () => {
       return validateTeamCount(teamCount.value, players.value.length).isValid
     }
     // by-players-per-team: need at least enough for 2 teams
-    return players.value.length >= playersPerTeam.value * 2
+    const hasGks = goalkeepers.value.length > 0
+    const outfieldPerTeam = hasGks ? playersPerTeam.value - 1 : playersPerTeam.value
+    return players.value.length >= outfieldPerTeam * 2
   })
 
   const totalParticipants = computed(() => players.value.length + goalkeepers.value.length)
@@ -35,14 +37,18 @@ export const useTeamRandomizerStore = defineStore('teamRandomizer', () => {
   // Computed preview for by-players-per-team mode
   const previewTeamCount = computed(() => {
     if (randomizeMode.value === 'by-players-per-team') {
-      return Math.floor(players.value.length / playersPerTeam.value)
+      const hasGks = goalkeepers.value.length > 0
+      const outfieldPerTeam = hasGks ? playersPerTeam.value - 1 : playersPerTeam.value
+      return Math.floor(players.value.length / outfieldPerTeam)
     }
     return teamCount.value
   })
 
   const previewBenchCount = computed(() => {
     if (randomizeMode.value === 'by-players-per-team') {
-      const extra = players.value.length % playersPerTeam.value
+      const hasGks = goalkeepers.value.length > 0
+      const outfieldPerTeam = hasGks ? playersPerTeam.value - 1 : playersPerTeam.value
+      const extra = players.value.length % outfieldPerTeam
       const extraGks = Math.max(0, goalkeepers.value.length - previewTeamCount.value)
       return extra + extraGks
     }
@@ -120,8 +126,10 @@ export const useTeamRandomizerStore = defineStore('teamRandomizer', () => {
       if (!validation.isValid) { error.value = validation.errorMessage ?? null; return }
       result = distributeByTeamCount([...players.value], teamCount.value, [...goalkeepers.value])
     } else {
-      if (players.value.length < playersPerTeam.value * 2) {
-        error.value = `Butuh minimal ${playersPerTeam.value * 2} pemain untuk membuat 2 tim`
+      const hasGks = goalkeepers.value.length > 0
+      const outfieldPerTeam = hasGks ? playersPerTeam.value - 1 : playersPerTeam.value
+      if (players.value.length < outfieldPerTeam * 2) {
+        error.value = `Butuh minimal ${outfieldPerTeam * 2} pemain untuk membuat 2 tim`
         return
       }
       result = distributeByPlayersPerTeam([...players.value], playersPerTeam.value, [...goalkeepers.value])
