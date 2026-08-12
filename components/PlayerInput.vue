@@ -1,11 +1,16 @@
 <script setup lang="ts">
 import { validatePlayerName } from '~/utils/validation'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   players: string[]
-  goalkeepers: string[]
-  staticData: string[]
-}>()
+  goalkeepers?: string[]
+  staticData?: string[]
+  showGoalkeepers?: boolean
+}>(), {
+  goalkeepers: () => [],
+  staticData: () => [],
+  showGoalkeepers: true
+})
 
 const emit = defineEmits<{
   'update:players': [value: string[]]
@@ -14,6 +19,7 @@ const emit = defineEmits<{
 }>()
 
 const activeTab = ref<'player' | 'gk'>('player')
+const gender = ref<'M'|'F'>('M')
 const inputName = ref('')
 const inputError = ref('')
 
@@ -52,11 +58,18 @@ function handleKeydown(e: KeyboardEvent) {
 function handleBulkAdd(payload: { players: string[]; goalkeepers: string[] }) {
   const existingPlayers = new Set(props.players.map(p => p.toLowerCase()))
   const newPlayers = payload.players.filter(p => !existingPlayers.has(p.toLowerCase()))
-  if (newPlayers.length > 0) emit('update:players', [...props.players, ...newPlayers])
+  
+  if (!props.showGoalkeepers) {
+    const newGksAsPlayers = payload.goalkeepers.filter(p => !existingPlayers.has(p.toLowerCase()))
+    const combined = [...newPlayers, ...newGksAsPlayers]
+    if (combined.length > 0) emit('update:players', [...props.players, ...combined])
+  } else {
+    if (newPlayers.length > 0) emit('update:players', [...props.players, ...newPlayers])
 
-  const existingGks = new Set(props.goalkeepers.map(p => p.toLowerCase()))
-  const newGks = payload.goalkeepers.filter(p => !existingGks.has(p.toLowerCase()))
-  if (newGks.length > 0) emit('update:goalkeepers', [...props.goalkeepers, ...newGks])
+    const existingGks = new Set((props.goalkeepers ?? []).map(p => p.toLowerCase()))
+    const newGks = payload.goalkeepers.filter(p => !existingGks.has(p.toLowerCase()))
+    if (newGks.length > 0) emit('update:goalkeepers', [...(props.goalkeepers ?? []), ...newGks])
+  }
 }
 
 const currentList = computed(() => activeTab.value === 'gk' ? props.goalkeepers : props.players)
@@ -69,13 +82,13 @@ const placeholder = computed(() => activeTab.value === 'gk' ? 'Nama kiper...' : 
     <div class="flex items-center justify-between mb-3">
       <h2 class="text-base sm:text-xl font-bold uppercase tracking-wide">👥 Peserta</h2>
       <div class="flex gap-1">
-        <span class="neo-badge bg-neo-green text-xs">🧤 {{ goalkeepers.length }}</span>
-        <span class="neo-badge text-xs">⚽ {{ players.length }}</span>
+        <span v-if="showGoalkeepers" class="neo-badge bg-neo-green text-xs">🧤 {{ (goalkeepers ?? []).length }}</span>
+        <span class="neo-badge text-xs">{{ showGoalkeepers ? '⚽' : '🏸' }} {{ players.length }}</span>
       </div>
     </div>
 
     <!-- Tabs -->
-    <div class="flex border-4 border-neo-black mb-3">
+    <div v-if="showGoalkeepers" class="flex border-4 border-neo-black mb-3">
       <button
         class="flex-1 py-2 font-bold text-xs sm:text-sm uppercase transition-colors"
         :class="activeTab === 'player' ? 'bg-neo-yellow' : 'bg-white'"
@@ -88,7 +101,7 @@ const placeholder = computed(() => activeTab.value === 'gk' ? 'Nama kiper...' : 
         :class="activeTab === 'gk' ? 'bg-neo-green' : 'bg-white'"
         @click="activeTab = 'gk'"
       >
-        🧤 Kiper ({{ goalkeepers.length }})
+        🧤 Kiper ({{ (goalkeepers ?? []).length }})
       </button>
     </div>
 
@@ -138,7 +151,7 @@ const placeholder = computed(() => activeTab.value === 'gk' ? 'Nama kiper...' : 
         class="neo-tag text-xs sm:text-sm py-0.5 sm:py-1"
         :class="activeTab === 'gk' ? 'bg-neo-green' : ''"
       >
-        <span>{{ activeTab === 'gk' ? '🧤' : '⚽' }} {{ name }}</span>
+        <span>{{ activeTab === 'gk' ? '🧤' : (showGoalkeepers ? '⚽' : '🏸') }} {{ name }}</span>
         <button
           class="ml-1 font-bold text-neo-red hover:text-neo-black"
           @click="removeCurrent(index)"
